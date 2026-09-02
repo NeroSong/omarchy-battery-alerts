@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "id": "io.github.nerosong.battery-alerts",
+  "id": "nerosong.battery-alerts",
   "name": "Battery Alerts",
   "version": "1.0.0",
   "author": "NeroSong",

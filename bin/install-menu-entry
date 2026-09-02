@@ -14,7 +14,7 @@ ENTRY = (
     '    "label": "Battery Alerts",\n'
     '    "aliases": ["battery", "low battery"],\n'
     '    "description": "Configure low and critical battery thresholds",\n'
-    '    "action": "omarchy-shell shell summon io.github.nerosong.battery-alerts"\n'
+    '    "action": "omarchy-shell shell summon nerosong.battery-alerts"\n'
     '  }\n'
     '  // battery-alerts:end\n'
 )

@@ -19,6 +19,7 @@ with tempfile.TemporaryDirectory() as temp:
     subprocess.run([install], check=True, env=env)
     installed = menu.read_text()
     assert installed.count("battery-alerts:start") == 1
+    assert "omarchy-shell shell summon nerosong.battery-alerts" in installed
     assert '"personal"' in installed
 
     subprocess.run([install], check=True, env=env)

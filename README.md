@@ -14,7 +14,7 @@ Configurable two-stage battery notifications for the Omarchy shell.
 
 ```bash
 omarchy plugin add https://github.com/NeroSong/omarchy-battery-alerts --enable
-~/.config/omarchy/plugins/io.github.nerosong.battery-alerts/bin/install-menu-entry
+~/.config/omarchy/plugins/nerosong.battery-alerts/bin/install-menu-entry
 ```
 
 Open the Omarchy menu and search for **Battery Alerts**. The panel lets you
@@ -40,8 +40,8 @@ configurable warnings.
 Before removing the plugin, remove its menu entry:
 
 ```bash
-~/.config/omarchy/plugins/io.github.nerosong.battery-alerts/bin/uninstall-menu-entry
-omarchy plugin remove io.github.nerosong.battery-alerts
+~/.config/omarchy/plugins/nerosong.battery-alerts/bin/uninstall-menu-entry
+omarchy plugin remove nerosong.battery-alerts
 ```
 
 The settings file is intentionally kept so reinstalling preserves your

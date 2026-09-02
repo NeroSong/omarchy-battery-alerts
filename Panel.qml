@@ -18,7 +18,7 @@ Item {
   property string statusText: ""
 
   readonly property string pluginId: manifest && manifest.id
-    ? String(manifest.id) : "io.github.nerosong.battery-alerts"
+    ? String(manifest.id) : "nerosong.battery-alerts"
   readonly property string settingsPath: Quickshell.env("HOME")
     + "/.config/omarchy/battery-alerts.json"
   readonly property color foreground: Color.foreground

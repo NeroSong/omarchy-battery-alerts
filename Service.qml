@@ -16,7 +16,7 @@ Item {
 
   PersistentProperties {
     id: persisted
-    reloadableId: "io-github-nerosong-battery-alerts"
+    reloadableId: "nerosong-battery-alerts"
     property bool warningSent: false
     property bool criticalSent: false
   }
