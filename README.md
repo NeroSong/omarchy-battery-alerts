@@ -9,6 +9,8 @@ Configurable two-stage battery notifications for the Omarchy shell.
   noticeable across icon themes.
 - Each warning appears once per discharge session and resets after AC power is
   connected.
+- One normal notification appears if the battery level cannot be read for 10
+  consecutive minutes; it can appear again only after reading recovers.
 - Runs alongside Omarchy's built-in battery service without replacing it.
 - A small settings panel opens directly or from an optional Omarchy menu entry.
 - No extra icon is added to the top bar.
@@ -42,7 +44,7 @@ test notifications. Changes take effect immediately and are saved in:
 ~/.config/omarchy/battery-alerts.json
 ```
 
-The once-per-discharge notification state is stored separately in:
+The once-per-discharge and battery-read failure state is stored separately in:
 
 ```text
 ~/.local/state/omarchy/battery-alerts.json

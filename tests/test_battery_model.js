@@ -3,6 +3,10 @@ const model = require("../BatteryModel.js")
 
 const defaults = { warningThreshold: 30, criticalThreshold: 20 }
 
+assert.equal(model.batteryPercentage(null), -1)
+assert.equal(model.batteryPercentage({ isPresent: true, percentage: undefined }), -1)
+assert.equal(model.batteryPercentage({ isPresent: true, percentage: 0.305 }), 31)
+
 assert.deepEqual(model.normalizeSettings({}), { version: 1, ...defaults })
 assert.deepEqual(
   model.normalizeSettings({ warningThreshold: 20, criticalThreshold: 40 }),
@@ -61,5 +65,32 @@ assert.deepEqual(state, { alert: "", warningSent: true, criticalSent: true })
 
 state = model.nextAlert(-1, false, false, defaults, true, true)
 assert.deepEqual(state, { alert: "", warningSent: true, criticalSent: true })
+
+state = model.nextAlert(Number.NaN, false, false, defaults, true, true)
+assert.deepEqual(state, { alert: "", warningSent: true, criticalSent: true })
+
+let failure = {}
+const start = 1_000_000
+for (let minute = 0; minute < 10; minute += 1) {
+  failure = model.nextReadFailureState(-1, start + minute * 60_000, failure)
+  assert.equal(failure.notify, false)
+}
+failure = model.nextReadFailureState(-1, start + 10 * 60_000, failure)
+assert.equal(failure.notify, true)
+assert.equal(failure.notified, true)
+
+failure = model.nextReadFailureState(-1, start + 11 * 60_000, failure)
+assert.equal(failure.notify, false)
+
+failure = model.nextReadFailureState(50, start + 12 * 60_000, failure)
+assert.deepEqual(failure, { startedAt: 0, lastAt: 0, notified: false, notify: false })
+
+failure = model.nextReadFailureState(-1, start + 13 * 60_000, failure)
+assert.equal(failure.notify, false)
+assert.equal(failure.startedAt, start + 13 * 60_000)
+
+failure = model.nextReadFailureState(-1, start + 20 * 60_000, failure)
+assert.equal(failure.notify, false)
+assert.equal(failure.startedAt, start + 20 * 60_000)
 
 console.log("BatteryModel tests passed")

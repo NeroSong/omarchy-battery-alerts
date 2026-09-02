@@ -29,6 +29,9 @@ Item {
   property bool stateLoaded: false
   property bool warningSent: false
   property bool criticalSent: false
+  property double readFailureStartedAt: 0
+  property double readFailureLastAt: 0
+  property bool readFailureNotified: false
 
   function loadSettings(raw) {
     var parsed = {}
@@ -40,7 +43,7 @@ Item {
     maybeCheckBattery()
   }
 
-  function loadAlertState(raw) {
+  function loadRuntimeState(raw) {
     // FileView may finish its implicit preload after the explicit reload that
     // follows mkdir. Hydrate exactly once so two startup callbacks cannot send
     // the same alert twice.
@@ -51,16 +54,23 @@ Item {
     }
     warningSent = parsed.warningSent === true
     criticalSent = parsed.criticalSent === true
+    var failure = BatteryModel.normalizeReadFailureState(parsed)
+    readFailureStartedAt = failure.startedAt
+    readFailureLastAt = failure.lastAt
+    readFailureNotified = failure.notified
     stateLoaded = true
     maybeCheckBattery()
   }
 
-  function saveAlertState() {
+  function saveRuntimeState() {
     if (!stateLoaded) return
     stateFile.setText(JSON.stringify({
-      version: 1,
+      version: 2,
       warningSent: warningSent,
-      criticalSent: criticalSent
+      criticalSent: criticalSent,
+      readFailureStartedAt: readFailureStartedAt,
+      readFailureLastAt: readFailureLastAt,
+      readFailureNotified: readFailureNotified
     }, null, 2) + "\n")
   }
 
@@ -69,7 +79,17 @@ Item {
       || criticalSent !== nextCriticalSent
     warningSent = nextWarningSent
     criticalSent = nextCriticalSent
-    if (changed) saveAlertState()
+    if (changed) saveRuntimeState()
+  }
+
+  function updateReadFailureState(next) {
+    var changed = readFailureStartedAt !== next.startedAt
+      || readFailureLastAt !== next.lastAt
+      || readFailureNotified !== next.notified
+    readFailureStartedAt = next.startedAt
+    readFailureLastAt = next.lastAt
+    readFailureNotified = next.notified
+    if (changed) saveRuntimeState()
   }
 
   function maybeCheckBattery() {
@@ -87,6 +107,14 @@ Item {
 
   function checkBattery() {
     var level = batteryPercentage()
+    var failure = BatteryModel.nextReadFailureState(level, Date.now(), {
+      readFailureStartedAt: readFailureStartedAt,
+      readFailureLastAt: readFailureLastAt,
+      readFailureNotified: readFailureNotified
+    })
+    updateReadFailureState(failure)
+    if (failure.notify) sendReadFailureWarning()
+
     var state = BatteryModel.nextAlert(
       level, UPower.onBattery, isDischarging(), settings,
       warningSent, criticalSent)
@@ -127,6 +155,20 @@ Item {
     criticalProcess.running = true
   }
 
+  function sendReadFailureWarning() {
+    if (readFailureProcess.running) return
+    readFailureProcess.command = [
+      "omarchy-notification-send",
+      "-g", "󰂃",
+      "-u", "normal",
+      "-i", warningIconPath,
+      "-t", "10000",
+      "Battery status unavailable",
+      "Battery level could not be read for 10 minutes"
+    ]
+    readFailureProcess.running = true
+  }
+
   function sendTestNotifications() {
     if (!warningProcess.running) sendWarning(settings.warningThreshold)
     // Match the real critical notification without running battery-low hooks
@@ -136,6 +178,7 @@ Item {
 
   Process { id: warningProcess }
   Process { id: criticalProcess }
+  Process { id: readFailureProcess }
 
   FileView {
     id: settingsFile
@@ -153,8 +196,8 @@ Item {
     watchChanges: false
     atomicWrites: true
     printErrors: false
-    onLoaded: if (root.stateDirReady) root.loadAlertState(text())
-    onLoadFailed: if (root.stateDirReady) root.loadAlertState("")
+    onLoaded: if (root.stateDirReady) root.loadRuntimeState(text())
+    onLoadFailed: if (root.stateDirReady) root.loadRuntimeState("")
   }
 
   Process {
