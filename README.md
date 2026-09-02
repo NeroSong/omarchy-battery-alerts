@@ -3,6 +3,7 @@
 Configurable two-stage battery notifications for the Omarchy shell.
 
 - A normal warning at 30% by default; it disappears automatically.
+- The normal notification uses a bundled yellow battery icon.
 - A critical warning at 20% by default; it stays visible until dismissed.
 - The critical notification uses a bundled red warning icon so it remains
   noticeable across icon themes.
@@ -37,7 +38,8 @@ This is an independent third-party service. It does not replace, clone, or
 modify Omarchy's built-in `omarchy.battery` service, so future Omarchy updates
 to battery handling and power-profile switching continue to apply normally.
 Omarchy's stock 10% warning remains enabled and may appear after this plugin's
-configurable warnings.
+configurable warnings. This plugin only reads battery state from UPower; it
+neither triggers nor listens for Omarchy's `battery-low` hook.
 
 ## Remove the menu entry
 
@@ -60,6 +62,6 @@ omarchy plugin validate .
 ```
 
 The service uses Quickshell's native UPower integration and checks every 60
-seconds, plus an immediate check whenever the power source changes. It calls
-Omarchy's existing notification helpers, including the
-standard `battery-low` hook for the critical alert.
+seconds, plus an immediate check whenever the power source changes. It uses
+Omarchy's notification sender for display, without changing the built-in
+battery service or its 10% warning.
