@@ -13,7 +13,15 @@ Configurable two-stage battery notifications for the Omarchy shell.
 - A small settings panel opens directly or from an optional Omarchy menu entry.
 - No extra icon is added to the top bar.
 
-![Battery Alerts settings panel](assets/settings-preview.png)
+![Battery Alerts settings panel](preview.png)
+
+## Requirements
+
+- Omarchy 4 with `omarchy-shell`, its notification service, and UPower.
+- Python 3 only when using the optional menu helper scripts.
+
+The plugin and its helpers do not require `sudo`, fetch remote content, or run
+downloaded code.
 
 ## Install
 
@@ -32,6 +40,12 @@ test notifications. Changes take effect immediately and are saved in:
 
 ```text
 ~/.config/omarchy/battery-alerts.json
+```
+
+The once-per-discharge notification state is stored separately in:
+
+```text
+~/.local/state/omarchy/battery-alerts.json
 ```
 
 Both sliders use the same fixed 5–90% range. The critical threshold cannot be
@@ -54,7 +68,8 @@ drop-in directory. The plugin manager does not run install hooks, so adding a
 menu entry is a separate, optional step.
 
 The included helper adds a marked Battery Alerts block while preserving other
-entries:
+entries. Before changing the shared menu file, it saves the previous version as
+`omarchy-menu.jsonc.battery-alerts.bak`, then replaces the file atomically.
 
 ```bash
 ~/.config/omarchy/plugins/nerosong.battery-alerts/bin/install-menu-entry
@@ -77,36 +92,45 @@ the entry when another entry is adjacent to it.
 }
 ```
 
-To remove an entry installed by the helper, run this before removing the
+## Uninstall
+
+If you installed the menu entry with the helper, remove it before removing the
 plugin:
 
 ```bash
 ~/.config/omarchy/plugins/nerosong.battery-alerts/bin/uninstall-menu-entry
 ```
 
-For a manual removal, delete only the `"setup.battery-alerts"` entry from that
-same file.
-
-## Uninstall
-
-Remove the plugin with:
+If you added it manually, delete only the `"setup.battery-alerts"` entry from
+`~/.config/omarchy/extensions/omarchy-menu.jsonc`. Then remove the plugin:
 
 ```bash
 omarchy plugin remove nerosong.battery-alerts
 ```
 
-The settings file is intentionally kept so reinstalling preserves your
-thresholds. Delete it as well with:
+Settings and per-discharge state are intentionally kept so reinstalling
+preserves them. Delete both as well with:
 
 ```bash
-rm -- ~/.config/omarchy/battery-alerts.json
+rm -f -- ~/.config/omarchy/battery-alerts.json \
+  ~/.local/state/omarchy/battery-alerts.json
+```
+
+Here `--` ends option parsing, so every following argument is treated as a file
+path.
+
+The menu helper keeps its safety backup after uninstall. Once you have verified
+that the remaining menu entries are intact, you may remove that backup with:
+
+```bash
+rm -f -- ~/.config/omarchy/extensions/omarchy-menu.jsonc.battery-alerts.bak
 ```
 
 ## Development
 
 ```bash
 node tests/test_battery_model.js
-python tests/test_menu_scripts.py
+python3 tests/test_menu_scripts.py
 omarchy plugin validate .
 ```
 

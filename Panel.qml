@@ -104,7 +104,7 @@ Item {
     ])
     Quickshell.execDetached([
       "omarchy-notification-send",
-      "-g", "󱐋", "-u", "critical", "-i", criticalIconPath, "-t", "30000",
+      "-g", "󱐋", "-u", "critical", "-i", criticalIconPath,
       "Time to recharge!", "Battery is down to " + criticalThreshold + "%"
     ])
   }

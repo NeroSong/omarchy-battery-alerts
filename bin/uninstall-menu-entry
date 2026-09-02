@@ -2,7 +2,39 @@
 """Remove only the Battery Alerts block from the Omarchy menu extension."""
 
 from pathlib import Path
+import json
+import os
 import re
+import shutil
+import stat
+import tempfile
+
+
+def parse_jsonc(value: str) -> dict:
+    stripped = re.sub(r"^\s*//[^\n]*(?:\n|$)", "", value, flags=re.MULTILINE)
+    stripped = re.sub(r",(\s*[}\]])", r"\1", stripped)
+    parsed = json.loads(stripped)
+    if not isinstance(parsed, dict):
+        raise ValueError("outer value must be an object")
+    return parsed
+
+
+def atomic_write_with_backup(path: Path, value: str) -> None:
+    mode = stat.S_IMODE(path.stat().st_mode)
+    shutil.copy2(path, path.with_name(path.name + ".battery-alerts.bak"))
+
+    descriptor, temporary = tempfile.mkstemp(
+        prefix=f".{path.name}.", dir=path.parent, text=True
+    )
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as output:
+            output.write(value)
+            output.flush()
+            os.fsync(output.fileno())
+        os.chmod(temporary, mode)
+        os.replace(temporary, path)
+    finally:
+        Path(temporary).unlink(missing_ok=True)
 
 
 path = Path.home() / ".config/omarchy/extensions/omarchy-menu.jsonc"
@@ -10,9 +42,9 @@ if not path.exists():
     print(f"No Omarchy menu extension found at {path}")
     raise SystemExit(0)
 
-text = path.read_text()
+text = path.read_text(encoding="utf-8")
 pattern = re.compile(
-    r",?\s*// battery-alerts:start\n.*?// battery-alerts:end\n?",
+    r"\s*// battery-alerts:start\n.*?// battery-alerts:end\n?",
     flags=re.DOTALL,
 )
 updated, count = pattern.subn("\n", text, count=1)
@@ -23,5 +55,9 @@ if count == 0:
 # Repair the two possible edges when the marked block was the first/last item.
 updated = re.sub(r"({\s*),", r"\1", updated, count=1)
 updated = re.sub(r",(\s*})", r"\1", updated, count=1)
-path.write_text(updated)
+try:
+    parse_jsonc(updated)
+except (json.JSONDecodeError, ValueError) as error:
+    raise SystemExit(f"Refusing to write an invalid menu file ({error}): {path}")
+atomic_write_with_backup(path, updated)
 print(f"Removed Battery Alerts menu entry from {path}")

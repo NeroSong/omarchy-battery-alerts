@@ -12,6 +12,9 @@ Item {
 
   readonly property string settingsPath: Quickshell.env("HOME")
     + "/.config/omarchy/battery-alerts.json"
+  readonly property string stateDir: Quickshell.env("HOME")
+    + "/.local/state/omarchy"
+  readonly property string statePath: stateDir + "/battery-alerts.json"
   readonly property string warningIconPath: {
     var url = Qt.resolvedUrl("warning-battery.svg").toString()
     return url.startsWith("file://") ? url.slice(7) : url
@@ -21,13 +24,11 @@ Item {
     return url.startsWith("file://") ? url.slice(7) : url
   }
   property var settings: BatteryModel.normalizeSettings({})
-
-  PersistentProperties {
-    id: persisted
-    reloadableId: "nerosong-battery-alerts"
-    property bool warningSent: false
-    property bool criticalSent: false
-  }
+  property bool settingsLoaded: false
+  property bool stateDirReady: false
+  property bool stateLoaded: false
+  property bool warningSent: false
+  property bool criticalSent: false
 
   function loadSettings(raw) {
     var parsed = {}
@@ -35,7 +36,44 @@ Item {
       console.warn("battery-alerts: invalid settings file, using defaults:", e)
     }
     settings = BatteryModel.normalizeSettings(parsed)
-    checkBattery()
+    settingsLoaded = true
+    maybeCheckBattery()
+  }
+
+  function loadAlertState(raw) {
+    // FileView may finish its implicit preload after the explicit reload that
+    // follows mkdir. Hydrate exactly once so two startup callbacks cannot send
+    // the same alert twice.
+    if (stateLoaded) return
+    var parsed = {}
+    try { parsed = JSON.parse(String(raw || "{}")) } catch (e) {
+      console.warn("battery-alerts: invalid state file, starting a new state:", e)
+    }
+    warningSent = parsed.warningSent === true
+    criticalSent = parsed.criticalSent === true
+    stateLoaded = true
+    maybeCheckBattery()
+  }
+
+  function saveAlertState() {
+    if (!stateLoaded) return
+    stateFile.setText(JSON.stringify({
+      version: 1,
+      warningSent: warningSent,
+      criticalSent: criticalSent
+    }, null, 2) + "\n")
+  }
+
+  function updateAlertState(nextWarningSent, nextCriticalSent) {
+    var changed = warningSent !== nextWarningSent
+      || criticalSent !== nextCriticalSent
+    warningSent = nextWarningSent
+    criticalSent = nextCriticalSent
+    if (changed) saveAlertState()
+  }
+
+  function maybeCheckBattery() {
+    if (settingsLoaded && stateLoaded) checkBattery()
   }
 
   function batteryPercentage() {
@@ -51,10 +89,9 @@ Item {
     var level = batteryPercentage()
     var state = BatteryModel.nextAlert(
       level, UPower.onBattery, isDischarging(), settings,
-      persisted.warningSent, persisted.criticalSent)
+      warningSent, criticalSent)
 
-    persisted.warningSent = state.warningSent
-    persisted.criticalSent = state.criticalSent
+    updateAlertState(state.warningSent, state.criticalSent)
 
     if (state.alert === "critical") sendCriticalWarning(level)
     else if (state.alert === "warning") sendWarning(level)
@@ -84,7 +121,6 @@ Item {
       "-g", "󱐋",
       "-u", "critical",
       "-i", criticalIconPath,
-      "-t", "30000",
       "Time to recharge!",
       "Battery is down to " + level + "%"
     ]
@@ -111,16 +147,41 @@ Item {
     onFileChanged: reload()
   }
 
+  FileView {
+    id: stateFile
+    path: root.statePath
+    watchChanges: false
+    atomicWrites: true
+    printErrors: false
+    onLoaded: if (root.stateDirReady) root.loadAlertState(text())
+    onLoadFailed: if (root.stateDirReady) root.loadAlertState("")
+  }
+
+  Process {
+    id: ensureStateDirProcess
+    command: ["mkdir", "-p", root.stateDir]
+    onExited: function(exitCode) {
+      if (exitCode !== 0) {
+        console.warn("battery-alerts: could not create state directory")
+        return
+      }
+      root.stateDirReady = true
+      stateFile.reload()
+    }
+  }
+
   Timer {
     interval: 60000
     running: true
     repeat: true
     triggeredOnStart: true
-    onTriggered: root.checkBattery()
+    onTriggered: root.maybeCheckBattery()
   }
 
   Connections {
     target: UPower
-    function onOnBatteryChanged() { root.checkBattery() }
+    function onOnBatteryChanged() { root.maybeCheckBattery() }
   }
+
+  Component.onCompleted: ensureStateDirProcess.running = true
 }
