@@ -72,6 +72,26 @@ Item {
     criticalProcess.running = true
   }
 
+  function sendCriticalNotification(level) {
+    criticalProcess.command = [
+      "omarchy-notification-send",
+      "-g", "󱐋",
+      "-u", "critical",
+      "-i", "battery-caution",
+      "-t", "30000",
+      "Time to recharge!",
+      "Battery is down to " + level + "%"
+    ]
+    criticalProcess.running = true
+  }
+
+  function sendTestNotifications() {
+    if (!warningProcess.running) sendWarning(settings.warningThreshold)
+    // Match the real critical notification without running battery-low hooks
+    // during a UI test.
+    if (!criticalProcess.running) sendCriticalNotification(settings.criticalThreshold)
+  }
+
   Process { id: warningProcess }
   Process { id: criticalProcess }
 

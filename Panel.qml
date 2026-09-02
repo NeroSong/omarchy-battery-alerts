@@ -12,9 +12,10 @@ Item {
 
   property var shell: null
   property var manifest: null
+  property var service: null
   property bool opened: false
-  property int warningThreshold: 50
-  property int criticalThreshold: 30
+  property int warningThreshold: 30
+  property int criticalThreshold: 20
 
   readonly property string pluginId: manifest && manifest.id
     ? String(manifest.id) : "nerosong.battery-alerts"
@@ -78,16 +79,25 @@ Item {
   }
 
   function resetDefaults() {
-    warningThreshold = 50
-    criticalThreshold = 30
+    warningThreshold = 30
+    criticalThreshold = 20
     saveSettings()
   }
 
   function testNotification() {
+    if (service && typeof service.sendTestNotifications === "function") {
+      service.sendTestNotifications()
+      return
+    }
     Quickshell.execDetached([
-      "omarchy-notification-send", "-u", "normal", "-t", "10000",
-      "Battery Alerts test",
-      "Warning at " + warningThreshold + "% · critical at " + criticalThreshold + "%"
+      "omarchy-notification-send",
+      "-g", "󰂃", "-u", "normal", "-i", "battery-low", "-t", "10000",
+      "Battery is getting low", "Battery is down to " + warningThreshold + "%"
+    ])
+    Quickshell.execDetached([
+      "omarchy-notification-send",
+      "-g", "󱐋", "-u", "critical", "-i", "battery-caution", "-t", "30000",
+      "Time to recharge!", "Battery is down to " + criticalThreshold + "%"
     ])
   }
 

@@ -6,8 +6,8 @@ function clampThreshold(value, fallback) {
 
 function normalizeSettings(value) {
   var raw = value && typeof value === "object" ? value : {}
-  var warning = clampThreshold(raw.warningThreshold, 50)
-  var critical = clampThreshold(raw.criticalThreshold, 30)
+  var warning = clampThreshold(raw.warningThreshold, 30)
+  var critical = clampThreshold(raw.criticalThreshold, 20)
 
   // Keep both controls usable even when a hand-edited settings file contains
   // an invalid pair. The panel applies the same invariant before saving.
@@ -88,7 +88,7 @@ function nextAlert(level, onBattery, discharging, settings, warningSent, critica
   if (level <= normalized.criticalThreshold) {
     return {
       alert: criticalSent ? "" : "critical",
-      // Reaching critical first must not produce a delayed 50% warning later.
+      // Reaching critical first must not produce a delayed normal warning.
       warningSent: true,
       criticalSent: true
     }

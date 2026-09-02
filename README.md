@@ -2,8 +2,8 @@
 
 Configurable two-stage battery notifications for the Omarchy shell.
 
-- A normal warning at 50% by default; it disappears automatically.
-- A critical warning at 30% by default; it stays visible until dismissed.
+- A normal warning at 30% by default; it disappears automatically.
+- A critical warning at 20% by default; it stays visible until dismissed.
 - Each warning appears once per discharge session and resets after AC power is
   connected.
 - Runs alongside Omarchy's built-in battery service without replacing it.
@@ -18,7 +18,7 @@ omarchy plugin add https://github.com/NeroSong/omarchy-battery-alerts --enable
 ```
 
 Open the Omarchy menu and search for **Battery Alerts**. The panel lets you
-change both thresholds, restore the defaults, and send a test notification.
+change both thresholds, restore the defaults, and send both test notifications.
 Changes take effect immediately and are saved in:
 
 ```text
