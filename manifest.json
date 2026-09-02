@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.nerosong.battery-alerts",
+  "name": "Battery Alerts",
+  "version": "1.0.0",
+  "author": "NeroSong",
+  "description": "Two-stage, configurable battery warnings for Omarchy",
+  "kinds": [
+    "service",
+    "panel"
+  ],
+  "entryPoints": {
+    "service": "Service.qml",
+    "panel": "Panel.qml"
+  },
+  "omarchy": {
+    "clonedFrom": "omarchy.battery"
+  }
+}
