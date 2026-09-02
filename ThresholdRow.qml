@@ -58,27 +58,35 @@ Rectangle {
         }
       }
 
+    }
+
+    RowLayout {
+      Layout.fillWidth: true
+      spacing: Style.space(12)
+
+      PanelSlider {
+        Layout.fillWidth: true
+        bar: null
+        minimum: root.minimum
+        maximum: root.maximum
+        step: 1
+        integer: true
+        value: root.value
+        trackColor: Qt.rgba(root.foreground.r, root.foreground.g, root.foreground.b, 0.18)
+        fillColor: root.accent
+        knobColor: root.foreground
+        onMoved: function(value) { root.valueModified(value) }
+      }
+
       Text {
+        Layout.preferredWidth: Style.space(42)
         text: root.value + "%"
         color: root.foreground
         font.family: root.fontFamily
-        font.pixelSize: Style.font.subtitle
+        font.pixelSize: Style.font.heading
         font.bold: true
+        horizontalAlignment: Text.AlignRight
       }
-    }
-
-    PanelSlider {
-      Layout.fillWidth: true
-      bar: null
-      minimum: root.minimum
-      maximum: root.maximum
-      step: 1
-      integer: true
-      value: root.value
-      trackColor: Qt.rgba(root.foreground.r, root.foreground.g, root.foreground.b, 0.18)
-      fillColor: root.accent
-      knobColor: root.foreground
-      onMoved: function(value) { root.valueModified(value) }
     }
   }
 }

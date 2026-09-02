@@ -15,7 +15,6 @@ Item {
   property bool opened: false
   property int warningThreshold: 50
   property int criticalThreshold: 30
-  property string statusText: ""
 
   readonly property string pluginId: manifest && manifest.id
     ? String(manifest.id) : "nerosong.battery-alerts"
@@ -56,8 +55,6 @@ Item {
     warningThreshold = normalized.warningThreshold
     criticalThreshold = normalized.criticalThreshold
     settingsFile.setText(JSON.stringify(normalized, null, 2) + "\n")
-    statusText = "Saved — new thresholds are active"
-    statusTimer.restart()
   }
 
   function setWarning(value) {
@@ -101,12 +98,6 @@ Item {
     onTriggered: root.saveSettings()
   }
 
-  Timer {
-    id: statusTimer
-    interval: 2500
-    onTriggered: root.statusText = ""
-  }
-
   PanelWindow {
     visible: root.opened
     anchors { top: true; bottom: true; left: true; right: true }
@@ -144,7 +135,10 @@ Item {
         ColumnLayout {
           id: content
           anchors.fill: parent
-          anchors.margins: Style.space(20)
+          anchors.leftMargin: Style.space(20)
+          anchors.rightMargin: Style.space(20)
+          anchors.topMargin: Style.space(20)
+          anchors.bottomMargin: Style.space(12)
           spacing: Style.space(18)
 
           Item {
@@ -210,33 +204,31 @@ Item {
             onValueModified: function(value) { root.setCritical(value) }
           }
 
-          Rectangle {
-            Layout.fillWidth: true
-            height: 1
-            color: Qt.rgba(root.foreground.r, root.foreground.g, root.foreground.b, 0.1)
-          }
-
-          RowLayout {
+          ColumnLayout {
             Layout.fillWidth: true
             spacing: Style.space(8)
 
-            Button {
-              text: "Test notification"
-              bordered: true
-              onClicked: root.testNotification()
+            Rectangle {
+              Layout.fillWidth: true
+              height: 1
+              color: Qt.rgba(root.foreground.r, root.foreground.g, root.foreground.b, 0.1)
             }
-            Button {
-              text: "Restore defaults"
-              bordered: true
-              onClicked: root.resetDefaults()
-            }
-            Item { Layout.fillWidth: true }
-            Text {
-              text: root.statusText
-              visible: text !== ""
-              color: root.accent
-              font.family: root.fontFamily
-              font.pixelSize: Style.font.caption
+
+            RowLayout {
+              Layout.fillWidth: true
+              spacing: Style.space(8)
+
+              Button {
+                text: "Test notification"
+                bordered: true
+                onClicked: root.testNotification()
+              }
+              Button {
+                text: "Restore defaults"
+                bordered: true
+                onClicked: root.resetDefaults()
+              }
+              Item { Layout.fillWidth: true }
             }
           }
         }
