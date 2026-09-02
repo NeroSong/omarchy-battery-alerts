@@ -10,19 +10,23 @@ Configurable two-stage battery notifications for the Omarchy shell.
 - Each warning appears once per discharge session and resets after AC power is
   connected.
 - Runs alongside Omarchy's built-in battery service without replacing it.
-- A small settings panel opens from the Omarchy menu.
+- A small settings panel opens directly or from an optional Omarchy menu entry.
 - No extra icon is added to the top bar.
 
 ## Install
 
 ```bash
 omarchy plugin add https://github.com/NeroSong/omarchy-battery-alerts --enable
-~/.config/omarchy/plugins/nerosong.battery-alerts/bin/install-menu-entry
 ```
 
-Open the Omarchy menu and search for **Battery Alerts**. The panel lets you
-change both thresholds, restore the defaults, and send both test notifications.
-Changes take effect immediately and are saved in:
+Open the settings panel directly with:
+
+```bash
+omarchy-shell shell summon nerosong.battery-alerts
+```
+
+The panel lets you change both thresholds, restore the defaults, and send both
+test notifications. Changes take effect immediately and are saved in:
 
 ```text
 ~/.config/omarchy/battery-alerts.json
@@ -41,23 +45,49 @@ Omarchy's stock 10% warning remains enabled and may appear after this plugin's
 configurable warnings. This plugin only reads battery state from UPower; it
 neither triggers nor listens for Omarchy's `battery-low` hook.
 
-## Remove the menu entry
+## Optional Omarchy menu entry
 
-Before removing the plugin, remove its menu entry:
+Omarchy currently stores user menu extensions in one shared file rather than a
+drop-in directory. To avoid overwriting unrelated menu entries, this plugin
+does not modify that file automatically.
+
+To make **Battery Alerts** searchable from the Omarchy menu, add the following
+entry inside the outer object in
+`~/.config/omarchy/extensions/omarchy-menu.jsonc`. Add a comma before or after
+the entry when another entry is adjacent to it.
+
+```jsonc
+"setup.battery-alerts": {
+  "icon": "󱐋",
+  "label": "Battery Alerts",
+  "aliases": ["battery", "low battery"],
+  "description": "Configure low and critical battery thresholds",
+  "action": "omarchy-shell shell summon nerosong.battery-alerts"
+}
+```
+
+To remove the menu item, delete only the `"setup.battery-alerts"` entry from
+that same file.
+
+## Uninstall
+
+Remove the plugin with:
 
 ```bash
-~/.config/omarchy/plugins/nerosong.battery-alerts/bin/uninstall-menu-entry
 omarchy plugin remove nerosong.battery-alerts
 ```
 
 The settings file is intentionally kept so reinstalling preserves your
-thresholds. Delete it manually if you also want to reset stored preferences.
+thresholds. Delete it as well with:
+
+```bash
+rm -- ~/.config/omarchy/battery-alerts.json
+```
 
 ## Development
 
 ```bash
 node tests/test_battery_model.js
-python tests/test_menu_scripts.py
 omarchy plugin validate .
 ```
 
@@ -65,3 +95,7 @@ The service uses Quickshell's native UPower integration and checks every 60
 seconds, plus an immediate check whenever the power source changes. It uses
 Omarchy's notification sender for display, without changing the built-in
 battery service or its 10% warning.
+
+## License
+
+Licensed under the [MIT License](LICENSE).
