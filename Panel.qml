@@ -58,12 +58,16 @@ Item {
   }
 
   function setWarning(value) {
-    warningThreshold = Math.max(criticalThreshold + 1, Math.round(value))
+    warningThreshold = Math.max(5, Math.min(90, Math.round(value)))
+    if (criticalThreshold > warningThreshold)
+      criticalThreshold = warningThreshold
     saveTimer.restart()
   }
 
   function setCritical(value) {
-    criticalThreshold = Math.min(warningThreshold - 1, Math.round(value))
+    criticalThreshold = Math.max(5, Math.min(90, Math.round(value)))
+    if (warningThreshold < criticalThreshold)
+      warningThreshold = criticalThreshold
     saveTimer.restart()
   }
 
@@ -182,8 +186,8 @@ Item {
             description: "Normal notification; disappears automatically"
             glyph: "󰁾"
             value: root.warningThreshold
-            minimum: Math.max(2, root.criticalThreshold + 1)
-            maximum: 95
+            minimum: 5
+            maximum: 90
             foreground: root.foreground
             accent: root.accent
             fontFamily: root.fontFamily
@@ -196,8 +200,8 @@ Item {
             description: "Stays visible until you dismiss it"
             glyph: "󱐋"
             value: root.criticalThreshold
-            minimum: 1
-            maximum: Math.min(94, root.warningThreshold - 1)
+            minimum: 5
+            maximum: 90
             foreground: root.foreground
             accent: root.accent
             fontFamily: root.fontFamily

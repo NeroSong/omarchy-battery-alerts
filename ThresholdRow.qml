@@ -37,7 +37,7 @@ Rectangle {
         text: root.glyph
         color: root.accent
         font.family: root.fontFamily
-        font.pixelSize: Style.font.heading
+        font.pixelSize: Math.round(Style.font.heading * 1.35)
       }
 
       ColumnLayout {
@@ -64,6 +64,16 @@ Rectangle {
       Layout.fillWidth: true
       spacing: Style.space(12)
 
+      Text {
+        Layout.preferredWidth: Style.space(42)
+        text: root.value + "%"
+        color: root.foreground
+        font.family: root.fontFamily
+        font.pixelSize: Style.font.heading
+        font.bold: true
+        horizontalAlignment: Text.AlignLeft
+      }
+
       PanelSlider {
         Layout.fillWidth: true
         bar: null
@@ -76,16 +86,6 @@ Rectangle {
         fillColor: root.accent
         knobColor: root.foreground
         onMoved: function(value) { root.valueModified(value) }
-      }
-
-      Text {
-        Layout.preferredWidth: Style.space(42)
-        text: root.value + "%"
-        color: root.foreground
-        font.family: root.fontFamily
-        font.pixelSize: Style.font.heading
-        font.bold: true
-        horizontalAlignment: Text.AlignRight
       }
     }
   }

@@ -1,7 +1,7 @@
 function clampThreshold(value, fallback) {
   var parsed = Math.round(Number(value))
   if (!isFinite(parsed)) parsed = fallback
-  return Math.max(1, Math.min(99, parsed))
+  return Math.max(5, Math.min(90, parsed))
 }
 
 function normalizeSettings(value) {
@@ -11,7 +11,7 @@ function normalizeSettings(value) {
 
   // Keep both controls usable even when a hand-edited settings file contains
   // an invalid pair. The panel applies the same invariant before saving.
-  if (critical >= warning) critical = Math.max(1, warning - 1)
+  if (critical > warning) critical = warning
 
   return {
     version: 1,

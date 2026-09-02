@@ -25,9 +25,10 @@ Changes take effect immediately and are saved in:
 ~/.config/omarchy/battery-alerts.json
 ```
 
-The critical threshold must remain below the normal warning threshold. The
-panel enforces that rule, and the service also validates a hand-edited settings
-file before using it.
+Both sliders use the same fixed 5–90% range. The critical threshold cannot be
+higher than the normal warning threshold; dragging one across the other moves
+the other threshold with it. If both are equal, the critical alert takes
+priority. The service also validates a hand-edited settings file before use.
 
 This is an independent third-party service. It does not replace, clone, or
 modify Omarchy's built-in `omarchy.battery` service, so future Omarchy updates
