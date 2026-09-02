@@ -70,10 +70,6 @@ function isDischarging(device, onBattery, dischargingState) {
 function nextAlert(level, onBattery, discharging, settings, warningSent, criticalSent) {
   var normalized = normalizeSettings(settings)
 
-  if (!onBattery) {
-    return { alert: "", warningSent: false, criticalSent: false }
-  }
-
   // A temporarily unavailable display device must not start a new discharge
   // session and repeat alerts when UPower catches up.
   if (level < 0) {
@@ -82,6 +78,10 @@ function nextAlert(level, onBattery, discharging, settings, warningSent, critica
       warningSent: warningSent,
       criticalSent: criticalSent
     }
+  }
+
+  if (!onBattery) {
+    return { alert: "", warningSent: false, criticalSent: false }
   }
 
   // UPower may briefly report PendingDischarge or Unknown around power-source

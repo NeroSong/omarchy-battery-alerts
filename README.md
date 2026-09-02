@@ -112,18 +112,15 @@ Settings and per-discharge state are intentionally kept so reinstalling
 preserves them. Delete both as well with:
 
 ```bash
-rm -f -- ~/.config/omarchy/battery-alerts.json \
+rm -f ~/.config/omarchy/battery-alerts.json \
   ~/.local/state/omarchy/battery-alerts.json
 ```
-
-Here `--` ends option parsing, so every following argument is treated as a file
-path.
 
 The menu helper keeps its safety backup after uninstall. Once you have verified
 that the remaining menu entries are intact, you may remove that backup with:
 
 ```bash
-rm -f -- ~/.config/omarchy/extensions/omarchy-menu.jsonc.battery-alerts.bak
+rm -f ~/.config/omarchy/extensions/omarchy-menu.jsonc.battery-alerts.bak
 ```
 
 ## Development

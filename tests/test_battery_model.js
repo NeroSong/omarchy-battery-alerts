@@ -59,4 +59,7 @@ assert.deepEqual(state, { alert: "", warningSent: true, criticalSent: false })
 state = model.nextAlert(-1, true, false, defaults, true, true)
 assert.deepEqual(state, { alert: "", warningSent: true, criticalSent: true })
 
+state = model.nextAlert(-1, false, false, defaults, true, true)
+assert.deepEqual(state, { alert: "", warningSent: true, criticalSent: true })
+
 console.log("BatteryModel tests passed")
