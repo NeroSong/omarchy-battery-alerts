@@ -62,10 +62,10 @@ Rectangle {
 
     RowLayout {
       Layout.fillWidth: true
-      spacing: Style.space(12)
+      spacing: Style.space(8)
 
       Text {
-        Layout.preferredWidth: Style.space(42)
+        Layout.preferredWidth: implicitWidth
         text: root.value + "%"
         color: root.foreground
         font.family: root.fontFamily

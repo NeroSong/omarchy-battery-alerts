@@ -6,11 +6,27 @@ const defaults = { warningThreshold: 50, criticalThreshold: 30 }
 assert.deepEqual(model.normalizeSettings({}), { version: 1, ...defaults })
 assert.deepEqual(
   model.normalizeSettings({ warningThreshold: 20, criticalThreshold: 40 }),
-  { version: 1, warningThreshold: 20, criticalThreshold: 20 }
+  { version: 1, warningThreshold: 20, criticalThreshold: 19 }
 )
 assert.deepEqual(
   model.normalizeSettings({ warningThreshold: 2, criticalThreshold: 99 }),
-  { version: 1, warningThreshold: 5, criticalThreshold: 5 }
+  { version: 1, warningThreshold: 6, criticalThreshold: 5 }
+)
+assert.deepEqual(
+  model.adjustWarning(defaults, 5),
+  { warningThreshold: 6, criticalThreshold: 5 }
+)
+assert.deepEqual(
+  model.adjustWarning(defaults, 20),
+  { warningThreshold: 20, criticalThreshold: 19 }
+)
+assert.deepEqual(
+  model.adjustCritical(defaults, 90),
+  { warningThreshold: 90, criticalThreshold: 89 }
+)
+assert.deepEqual(
+  model.adjustCritical(defaults, 60),
+  { warningThreshold: 61, criticalThreshold: 60 }
 )
 
 let state = model.nextAlert(80, true, true, defaults, false, false)

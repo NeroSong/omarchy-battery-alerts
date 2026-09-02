@@ -58,16 +58,22 @@ Item {
   }
 
   function setWarning(value) {
-    warningThreshold = Math.max(5, Math.min(90, Math.round(value)))
-    if (criticalThreshold > warningThreshold)
-      criticalThreshold = warningThreshold
+    var adjusted = BatteryModel.adjustWarning({
+      warningThreshold: warningThreshold,
+      criticalThreshold: criticalThreshold
+    }, value)
+    warningThreshold = adjusted.warningThreshold
+    criticalThreshold = adjusted.criticalThreshold
     saveTimer.restart()
   }
 
   function setCritical(value) {
-    criticalThreshold = Math.max(5, Math.min(90, Math.round(value)))
-    if (warningThreshold < criticalThreshold)
-      warningThreshold = criticalThreshold
+    var adjusted = BatteryModel.adjustCritical({
+      warningThreshold: warningThreshold,
+      criticalThreshold: criticalThreshold
+    }, value)
+    warningThreshold = adjusted.warningThreshold
+    criticalThreshold = adjusted.criticalThreshold
     saveTimer.restart()
   }
 
@@ -208,32 +214,21 @@ Item {
             onValueModified: function(value) { root.setCritical(value) }
           }
 
-          ColumnLayout {
+          RowLayout {
             Layout.fillWidth: true
             spacing: Style.space(8)
 
-            Rectangle {
-              Layout.fillWidth: true
-              height: 1
-              color: Qt.rgba(root.foreground.r, root.foreground.g, root.foreground.b, 0.1)
+            Button {
+              text: "Test notification"
+              bordered: true
+              onClicked: root.testNotification()
             }
-
-            RowLayout {
-              Layout.fillWidth: true
-              spacing: Style.space(8)
-
-              Button {
-                text: "Test notification"
-                bordered: true
-                onClicked: root.testNotification()
-              }
-              Button {
-                text: "Restore defaults"
-                bordered: true
-                onClicked: root.resetDefaults()
-              }
-              Item { Layout.fillWidth: true }
+            Button {
+              text: "Restore defaults"
+              bordered: true
+              onClicked: root.resetDefaults()
             }
+            Item { Layout.fillWidth: true }
           }
         }
       }

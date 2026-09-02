@@ -11,13 +11,50 @@ function normalizeSettings(value) {
 
   // Keep both controls usable even when a hand-edited settings file contains
   // an invalid pair. The panel applies the same invariant before saving.
-  if (critical > warning) critical = warning
+  if (critical >= warning) {
+    if (warning <= 5) warning = 6
+    critical = warning - 1
+  }
 
   return {
     version: 1,
     warningThreshold: warning,
     criticalThreshold: critical
   }
+}
+
+function adjustWarning(settings, value) {
+  var current = normalizeSettings(settings)
+  var warning = clampThreshold(value, current.warningThreshold)
+  var critical = current.criticalThreshold
+
+  if (warning <= critical) {
+    if (warning <= 5) {
+      warning = 6
+      critical = 5
+    } else {
+      critical = warning - 1
+    }
+  }
+
+  return { warningThreshold: warning, criticalThreshold: critical }
+}
+
+function adjustCritical(settings, value) {
+  var current = normalizeSettings(settings)
+  var warning = current.warningThreshold
+  var critical = clampThreshold(value, current.criticalThreshold)
+
+  if (critical >= warning) {
+    if (critical >= 90) {
+      warning = 90
+      critical = 89
+    } else {
+      warning = critical + 1
+    }
+  }
+
+  return { warningThreshold: warning, criticalThreshold: critical }
 }
 
 function batteryPercentage(device) {
@@ -76,6 +113,8 @@ if (typeof module !== "undefined") {
   module.exports = {
     clampThreshold: clampThreshold,
     normalizeSettings: normalizeSettings,
+    adjustWarning: adjustWarning,
+    adjustCritical: adjustCritical,
     batteryPercentage: batteryPercentage,
     isDischarging: isDischarging,
     nextAlert: nextAlert

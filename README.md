@@ -26,9 +26,10 @@ Changes take effect immediately and are saved in:
 ```
 
 Both sliders use the same fixed 5–90% range. The critical threshold cannot be
-higher than the normal warning threshold; dragging one across the other moves
-the other threshold with it. If both are equal, the critical alert takes
-priority. The service also validates a hand-edited settings file before use.
+higher than or equal to the normal warning threshold; dragging one across the
+other moves the other threshold with it while preserving at least a 1% gap.
+At the range edges the pair stops at 5/6% or 89/90%. The service also validates
+a hand-edited settings file before use.
 
 This is an independent third-party service. It does not replace, clone, or
 modify Omarchy's built-in `omarchy.battery` service, so future Omarchy updates
