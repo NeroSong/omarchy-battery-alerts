@@ -147,11 +147,14 @@ Item {
           anchors.margins: Style.space(20)
           spacing: Style.space(18)
 
-          RowLayout {
+          Item {
             Layout.fillWidth: true
+            implicitHeight: Math.max(headerText.implicitHeight, closeButton.implicitHeight)
 
             ColumnLayout {
-              Layout.fillWidth: true
+              id: headerText
+              anchors.left: parent.left
+              anchors.top: parent.top
               spacing: Style.space(3)
               Text {
                 text: "Battery Alerts"
@@ -161,7 +164,7 @@ Item {
                 font.bold: true
               }
               Text {
-                text: "Two reminders, no bar icon"
+                text: "Two reminders before your battery runs out"
                 color: Qt.rgba(root.foreground.r, root.foreground.g, root.foreground.b, 0.62)
                 font.family: root.fontFamily
                 font.pixelSize: Style.font.caption
@@ -169,7 +172,12 @@ Item {
             }
 
             Button {
-              text: "Close"
+              id: closeButton
+              anchors.right: parent.right
+              anchors.top: parent.top
+              iconText: "󰅖"
+              tooltipText: "Close"
+              bordered: true
               onClicked: root.dismiss()
             }
           }
@@ -214,10 +222,12 @@ Item {
 
             Button {
               text: "Test notification"
+              bordered: true
               onClicked: root.testNotification()
             }
             Button {
               text: "Restore defaults"
+              bordered: true
               onClicked: root.resetDefaults()
             }
             Item { Layout.fillWidth: true }
