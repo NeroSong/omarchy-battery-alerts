@@ -12,8 +12,5 @@
   "entryPoints": {
     "service": "Service.qml",
     "panel": "Panel.qml"
-  },
-  "omarchy": {
-    "clonedFrom": "omarchy.battery"
   }
 }

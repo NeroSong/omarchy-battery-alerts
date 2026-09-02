@@ -6,6 +6,7 @@ Configurable two-stage battery notifications for the Omarchy shell.
 - A critical warning at 30% by default; it stays visible until dismissed.
 - Each warning appears once per discharge session and resets after AC power is
   connected.
+- Runs alongside Omarchy's built-in battery service without replacing it.
 - A small settings panel opens from the Omarchy menu.
 - No extra icon is added to the top bar.
 
@@ -28,9 +29,11 @@ The critical threshold must remain below the normal warning threshold. The
 panel enforces that rule, and the service also validates a hand-edited settings
 file before using it.
 
-This plugin replaces Omarchy's built-in `omarchy.battery` service while it is
-enabled, so the stock 10% notification will not fire as a duplicate. Disabling
-or removing the plugin restores the built-in service.
+This is an independent third-party service. It does not replace, clone, or
+modify Omarchy's built-in `omarchy.battery` service, so future Omarchy updates
+to battery handling and power-profile switching continue to apply normally.
+Omarchy's stock 10% warning remains enabled and may appear after this plugin's
+configurable warnings.
 
 ## Remove the menu entry
 
@@ -52,6 +55,7 @@ python tests/test_menu_scripts.py
 omarchy plugin validate .
 ```
 
-The service uses Quickshell's native UPower integration and checks every 30
-seconds. It calls Omarchy's existing notification helpers, including the
+The service uses Quickshell's native UPower integration and checks every 60
+seconds, plus an immediate check whenever the power source changes. It calls
+Omarchy's existing notification helpers, including the
 standard `battery-low` hook for the critical alert.
