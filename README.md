@@ -13,6 +13,8 @@ Configurable two-stage battery notifications for the Omarchy shell.
 - A small settings panel opens directly or from an optional Omarchy menu entry.
 - No extra icon is added to the top bar.
 
+![Battery Alerts settings panel](assets/settings-preview.png)
+
 ## Install
 
 ```bash
