@@ -12,6 +12,10 @@ Item {
 
   readonly property string settingsPath: Quickshell.env("HOME")
     + "/.config/omarchy/battery-alerts.json"
+  readonly property string criticalIconPath: {
+    var url = Qt.resolvedUrl("critical-battery.svg").toString()
+    return url.startsWith("file://") ? url.slice(7) : url
+  }
   property var settings: BatteryModel.normalizeSettings({})
 
   PersistentProperties {
@@ -66,18 +70,22 @@ Item {
   }
 
   function sendCriticalWarning(level) {
-    // The stock helper sends a critical notification and preserves Omarchy's
-    // battery-low hook. Critical notifications remain until dismissed.
-    criticalProcess.command = ["omarchy-battery-low", String(level)]
-    criticalProcess.running = true
+    sendCriticalNotification(level)
+    // Preserve Omarchy's standard extension point without inheriting the
+    // stock helper's theme-dependent battery icon.
+    if (!hookProcess.running) {
+      hookProcess.command = ["omarchy-hook", "battery-low", String(level)]
+      hookProcess.running = true
+    }
   }
 
   function sendCriticalNotification(level) {
+    if (criticalProcess.running) return
     criticalProcess.command = [
       "omarchy-notification-send",
       "-g", "󱐋",
       "-u", "critical",
-      "-i", "battery-caution",
+      "-i", criticalIconPath,
       "-t", "30000",
       "Time to recharge!",
       "Battery is down to " + level + "%"
@@ -94,6 +102,7 @@ Item {
 
   Process { id: warningProcess }
   Process { id: criticalProcess }
+  Process { id: hookProcess }
 
   FileView {
     id: settingsFile

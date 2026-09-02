@@ -4,6 +4,8 @@ Configurable two-stage battery notifications for the Omarchy shell.
 
 - A normal warning at 30% by default; it disappears automatically.
 - A critical warning at 20% by default; it stays visible until dismissed.
+- The critical notification uses a bundled red warning icon so it remains
+  noticeable across icon themes.
 - Each warning appears once per discharge session and resets after AC power is
   connected.
 - Runs alongside Omarchy's built-in battery service without replacing it.

@@ -21,6 +21,10 @@ Item {
     ? String(manifest.id) : "nerosong.battery-alerts"
   readonly property string settingsPath: Quickshell.env("HOME")
     + "/.config/omarchy/battery-alerts.json"
+  readonly property string criticalIconPath: {
+    var url = Qt.resolvedUrl("critical-battery.svg").toString()
+    return url.startsWith("file://") ? url.slice(7) : url
+  }
   readonly property color foreground: Color.foreground
   readonly property color background: Color.background
   readonly property color accent: Color.accent
@@ -96,7 +100,7 @@ Item {
     ])
     Quickshell.execDetached([
       "omarchy-notification-send",
-      "-g", "󱐋", "-u", "critical", "-i", "battery-caution", "-t", "30000",
+      "-g", "󱐋", "-u", "critical", "-i", criticalIconPath, "-t", "30000",
       "Time to recharge!", "Battery is down to " + criticalThreshold + "%"
     ])
   }
