@@ -131,7 +131,7 @@ Item {
 
       Rectangle {
         id: card
-        width: Math.min(460, parent.width - Style.space(32))
+        width: Math.min(520, parent.width - Style.space(32))
         implicitHeight: content.implicitHeight + Style.space(40)
         height: implicitHeight
         anchors.centerIn: parent

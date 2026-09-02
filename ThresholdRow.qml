@@ -10,11 +10,12 @@ Rectangle {
   property string description: ""
   property string glyph: ""
   property int value: 0
-  property int minimum: 1
-  property int maximum: 99
+  property int minimum: 5
+  property int maximum: 90
   property color foreground: "white"
   property color accent: "white"
   property string fontFamily: ""
+  readonly property real leadingColumnWidth: Style.space(40)
 
   signal valueModified(int value)
 
@@ -31,13 +32,21 @@ Rectangle {
 
     RowLayout {
       Layout.fillWidth: true
-      spacing: Style.space(10)
+      spacing: Style.space(8)
 
-      Text {
-        text: root.glyph
-        color: root.accent
-        font.family: root.fontFamily
-        font.pixelSize: Math.round(Style.font.heading * 1.35)
+      Item {
+        Layout.preferredWidth: root.leadingColumnWidth
+        Layout.minimumWidth: root.leadingColumnWidth
+        Layout.maximumWidth: root.leadingColumnWidth
+        Layout.fillHeight: true
+
+        Text {
+          anchors.centerIn: parent
+          text: root.glyph
+          color: root.accent
+          font.family: root.fontFamily
+          font.pixelSize: Math.round(Style.font.heading * 1.35)
+        }
       }
 
       ColumnLayout {
@@ -65,13 +74,15 @@ Rectangle {
       spacing: Style.space(8)
 
       Text {
-        Layout.preferredWidth: implicitWidth
+        Layout.preferredWidth: root.leadingColumnWidth
+        Layout.minimumWidth: root.leadingColumnWidth
+        Layout.maximumWidth: root.leadingColumnWidth
         text: root.value + "%"
         color: root.foreground
         font.family: root.fontFamily
         font.pixelSize: Style.font.heading
         font.bold: true
-        horizontalAlignment: Text.AlignLeft
+        horizontalAlignment: Text.AlignHCenter
       }
 
       PanelSlider {
