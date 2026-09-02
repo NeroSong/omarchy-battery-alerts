@@ -48,8 +48,17 @@ neither triggers nor listens for Omarchy's `battery-low` hook.
 ## Optional Omarchy menu entry
 
 Omarchy currently stores user menu extensions in one shared file rather than a
-drop-in directory. To avoid overwriting unrelated menu entries, this plugin
-does not modify that file automatically.
+drop-in directory. The plugin manager does not run install hooks, so adding a
+menu entry is a separate, optional step.
+
+The included helper adds a marked Battery Alerts block while preserving other
+entries:
+
+```bash
+~/.config/omarchy/plugins/nerosong.battery-alerts/bin/install-menu-entry
+```
+
+If you prefer not to run the helper, add the entry manually instead.
 
 To make **Battery Alerts** searchable from the Omarchy menu, add the following
 entry inside the outer object in
@@ -66,8 +75,15 @@ the entry when another entry is adjacent to it.
 }
 ```
 
-To remove the menu item, delete only the `"setup.battery-alerts"` entry from
-that same file.
+To remove an entry installed by the helper, run this before removing the
+plugin:
+
+```bash
+~/.config/omarchy/plugins/nerosong.battery-alerts/bin/uninstall-menu-entry
+```
+
+For a manual removal, delete only the `"setup.battery-alerts"` entry from that
+same file.
 
 ## Uninstall
 
@@ -88,6 +104,7 @@ rm -- ~/.config/omarchy/battery-alerts.json
 
 ```bash
 node tests/test_battery_model.js
+python tests/test_menu_scripts.py
 omarchy plugin validate .
 ```
 

@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+"""Add Battery Alerts to the user-owned Omarchy menu extension."""
+
+from pathlib import Path
+import re
+
+
+START = "// battery-alerts:start"
+END = "// battery-alerts:end"
+ENTRY = (
+    '  // battery-alerts:start\n'
+    '  "setup.battery-alerts": {\n'
+    '    "icon": "󱐋",\n'
+    '    "label": "Battery Alerts",\n'
+    '    "aliases": ["battery", "low battery"],\n'
+    '    "description": "Configure low and critical battery thresholds",\n'
+    '    "action": "omarchy-shell shell summon nerosong.battery-alerts"\n'
+    '  }\n'
+    '  // battery-alerts:end\n'
+)
+
+
+def without_comments(value: str) -> str:
+    return re.sub(r"^\s*//[^\n]*(?:\n|$)", "", value, flags=re.MULTILINE)
+
+
+path = Path.home() / ".config/omarchy/extensions/omarchy-menu.jsonc"
+path.parent.mkdir(parents=True, exist_ok=True)
+text = path.read_text() if path.exists() else "{}\n"
+
+if START in text:
+    print(f"Battery Alerts menu entry already exists in {path}")
+    raise SystemExit(0)
+
+closing = text.rfind("}")
+if closing < 0:
+    raise SystemExit(f"Refusing to edit invalid menu file (missing closing brace): {path}")
+
+opening = text.find("{")
+if opening < 0 or opening > closing:
+    raise SystemExit(f"Refusing to edit invalid menu file (missing object): {path}")
+
+body = without_comments(text[opening + 1 : closing]).strip()
+prefix = text[:closing].rstrip()
+separator = "" if not body or prefix.endswith(",") else ","
+updated = prefix + separator + "\n" + ENTRY + text[closing:]
+path.write_text(updated)
+print(f"Installed Battery Alerts menu entry in {path}")
