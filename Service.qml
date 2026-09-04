@@ -10,11 +10,10 @@ Item {
   property var shell: null
   property string omarchyPath: Quickshell.env("OMARCHY_PATH")
 
-  readonly property string settingsPath: Quickshell.env("HOME")
-    + "/.config/omarchy/battery-alerts.json"
-  readonly property string stateDir: Quickshell.env("HOME")
-    + "/.local/state/omarchy"
-  readonly property string statePath: stateDir + "/battery-alerts.json"
+  readonly property string safeJsonPath: {
+    var url = Qt.resolvedUrl("bin/safe-json").toString()
+    return url.startsWith("file://") ? url.slice(7) : url
+  }
   readonly property string warningIconPath: {
     var url = Qt.resolvedUrl("warning-battery.svg").toString()
     return url.startsWith("file://") ? url.slice(7) : url
@@ -25,13 +24,21 @@ Item {
   }
   property var settings: BatteryModel.normalizeSettings({})
   property bool settingsLoaded: false
-  property bool stateDirReady: false
   property bool stateLoaded: false
   property bool warningSent: false
   property bool criticalSent: false
   property double readFailureStartedAt: 0
   property double readFailureLastAt: 0
   property bool readFailureNotified: false
+
+  function safeJsonCommand(operation, kind, value) {
+    var command = [
+      "/usr/bin/timeout", "--kill-after=1s", "5s",
+      safeJsonPath, operation, kind
+    ]
+    if (value !== undefined) command.push(value)
+    return command
+  }
 
   function loadSettings(raw) {
     var parsed = {}
@@ -43,10 +50,15 @@ Item {
     maybeCheckBattery()
   }
 
+  function reloadSettings() {
+    if (!settingsReadProcess.running) {
+      settingsReadProcess.command = safeJsonCommand("read", "settings")
+      settingsReadProcess.running = true
+    }
+  }
+
   function loadRuntimeState(raw) {
-    // FileView may finish its implicit preload after the explicit reload that
-    // follows mkdir. Hydrate exactly once so two startup callbacks cannot send
-    // the same alert twice.
+    // Hydrate exactly once so a later read cannot send the same alert twice.
     if (stateLoaded) return
     var parsed = {}
     try { parsed = JSON.parse(String(raw || "{}")) } catch (e) {
@@ -64,14 +76,24 @@ Item {
 
   function saveRuntimeState() {
     if (!stateLoaded) return
-    stateFile.setText(JSON.stringify({
+    pendingState = JSON.stringify({
       version: 2,
       warningSent: warningSent,
       criticalSent: criticalSent,
       readFailureStartedAt: readFailureStartedAt,
       readFailureLastAt: readFailureLastAt,
       readFailureNotified: readFailureNotified
-    }, null, 2) + "\n")
+    })
+    if (!stateWriteProcess.running) writePendingState()
+  }
+
+  property string pendingState: ""
+  function writePendingState() {
+    if (!pendingState) return
+    var value = pendingState
+    pendingState = ""
+    stateWriteProcess.command = safeJsonCommand("write", "state", value)
+    stateWriteProcess.running = true
   }
 
   function updateAlertState(nextWarningSent, nextCriticalSent) {
@@ -127,7 +149,7 @@ Item {
 
   function sendWarning(level) {
     warningProcess.command = [
-      "omarchy-notification-send",
+      "/usr/bin/timeout", "--kill-after=1s", "5s", "/usr/bin/omarchy-notification-send",
       "-g", "󰂃",
       "-u", "normal",
       "-i", warningIconPath,
@@ -145,7 +167,7 @@ Item {
   function sendCriticalNotification(level) {
     if (criticalProcess.running) return
     criticalProcess.command = [
-      "omarchy-notification-send",
+      "/usr/bin/timeout", "--kill-after=1s", "5s", "/usr/bin/omarchy-notification-send",
       "-g", "󱐋",
       "-u", "critical",
       "-i", criticalIconPath,
@@ -158,7 +180,7 @@ Item {
   function sendReadFailureWarning() {
     if (readFailureProcess.running) return
     readFailureProcess.command = [
-      "omarchy-notification-send",
+      "/usr/bin/timeout", "--kill-after=1s", "5s", "/usr/bin/omarchy-notification-send",
       "-g", "󰂃",
       "-u", "normal",
       "-i", warningIconPath,
@@ -179,37 +201,25 @@ Item {
   Process { id: warningProcess }
   Process { id: criticalProcess }
   Process { id: readFailureProcess }
-
-  FileView {
-    id: settingsFile
-    path: root.settingsPath
-    watchChanges: true
-    printErrors: false
-    onLoaded: root.loadSettings(text())
-    onLoadFailed: root.loadSettings("")
-    onFileChanged: reload()
-  }
-
-  FileView {
-    id: stateFile
-    path: root.statePath
-    watchChanges: false
-    atomicWrites: true
-    printErrors: false
-    onLoaded: if (root.stateDirReady) root.loadRuntimeState(text())
-    onLoadFailed: if (root.stateDirReady) root.loadRuntimeState("")
-  }
-
   Process {
-    id: ensureStateDirProcess
-    command: ["mkdir", "-p", root.stateDir]
+    id: settingsReadProcess
+    stdout: StdioCollector { id: settingsReadOutput; waitForEnd: true }
     onExited: function(exitCode) {
-      if (exitCode !== 0) {
-        console.warn("battery-alerts: could not create state directory")
-        return
-      }
-      root.stateDirReady = true
-      stateFile.reload()
+      root.loadSettings(exitCode === 0 ? settingsReadOutput.text : "")
+    }
+  }
+  Process {
+    id: stateReadProcess
+    stdout: StdioCollector { id: stateReadOutput; waitForEnd: true }
+    onExited: function(exitCode) {
+      root.loadRuntimeState(exitCode === 0 ? stateReadOutput.text : "")
+    }
+  }
+  Process {
+    id: stateWriteProcess
+    onExited: function(exitCode) {
+      if (exitCode !== 0) console.warn("battery-alerts: state write failed:", exitCode)
+      root.writePendingState()
     }
   }
 
@@ -218,7 +228,7 @@ Item {
     running: true
     repeat: true
     triggeredOnStart: true
-    onTriggered: root.maybeCheckBattery()
+    onTriggered: { root.reloadSettings(); root.maybeCheckBattery() }
   }
 
   Connections {
@@ -226,5 +236,9 @@ Item {
     function onOnBatteryChanged() { root.maybeCheckBattery() }
   }
 
-  Component.onCompleted: ensureStateDirProcess.running = true
+  Component.onCompleted: {
+    reloadSettings()
+    stateReadProcess.command = safeJsonCommand("read", "state")
+    stateReadProcess.running = true
+  }
 }

@@ -20,10 +20,11 @@ Configurable two-stage battery notifications for the Omarchy shell.
 ## Requirements
 
 - Omarchy 4 with `omarchy-shell`, its notification service, and UPower.
-- Python 3 only when using the optional menu helper scripts.
+- Python 3 (used by the bounded local persistence helper and optional menu helper scripts).
+- GNU coreutils `timeout` (used to bound every helper process).
 
-The plugin and its helpers do not require `sudo`, fetch remote content, or run
-downloaded code.
+The plugin and its helpers need no elevated privileges, fetch no remote content,
+and run no downloaded code.
 
 ## Install
 
@@ -55,6 +56,11 @@ higher than or equal to the normal warning threshold; dragging one across the
 other moves the other threshold with it while preserving at least a 1% gap.
 At the range edges the pair stops at 5/6% or 89/90%. The service also validates
 a hand-edited settings file before use.
+
+Before reading or replacing either local data file, the helper requires a
+user-owned regular file, rejects symlinks and special files, caps data at 8 KiB,
+and uses descriptor-scoped atomic replacement. Notification delivery is pinned
+to Omarchy's installed notification helper and bounded to five seconds.
 
 This is an independent third-party service. It does not replace, clone, or
 modify Omarchy's built-in `omarchy.battery` service, so future Omarchy updates
@@ -90,7 +96,7 @@ the entry when another entry is adjacent to it.
   "label": "Battery Alerts",
   "aliases": ["battery", "low battery"],
   "description": "Configure low and critical battery thresholds",
-  "action": "omarchy-shell shell summon nerosong.battery-alerts"
+  "action": "/usr/bin/omarchy-shell shell summon nerosong.battery-alerts"
 }
 ```
 
@@ -130,6 +136,8 @@ rm -f ~/.config/omarchy/extensions/omarchy-menu.jsonc.battery-alerts.bak
 ```bash
 node tests/test_battery_model.js
 python3 tests/test_menu_scripts.py
+python3 tests/test_safe_json.py
+python3 tests/test_qml_processes.py
 omarchy plugin validate .
 ```
 

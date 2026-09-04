@@ -82,6 +82,24 @@ with tempfile.TemporaryDirectory() as temp:
     home = Path(temp)
     menu = home / ".config/omarchy/extensions/omarchy-menu.jsonc"
     menu.parent.mkdir(parents=True)
+    legacy = """{
+  // battery-alerts:start
+  "setup.battery-alerts": {
+    "label": "Battery Alerts",
+    "action": "omarchy-shell shell summon nerosong.battery-alerts"
+  },
+  // battery-alerts:end
+  "personal": {"label": "Personal"}
+}
+"""
+    menu.write_text(legacy)
+    run(uninstall, home)
+    assert parse_jsonc(menu.read_text()) == {"personal": {"label": "Personal"}}
+
+with tempfile.TemporaryDirectory() as temp:
+    home = Path(temp)
+    menu = home / ".config/omarchy/extensions/omarchy-menu.jsonc"
+    menu.parent.mkdir(parents=True)
     invalid = "not jsonc\n"
     menu.write_text(invalid)
     result = run(install, home, check=False)
@@ -98,5 +116,46 @@ with tempfile.TemporaryDirectory() as temp:
     assert result.returncode != 0
     assert "add the documented entry manually" in result.stderr
     assert menu.read_text() == wrapped
+
+with tempfile.TemporaryDirectory() as temp:
+    home = Path(temp)
+    menu = home / ".config/omarchy/extensions/omarchy-menu.jsonc"
+    menu.parent.mkdir(parents=True)
+    ambiguous = """{
+  // battery-alerts:start
+  "unrelated": {"label": "Keep me"},
+  // battery-alerts:end
+  "setup.battery-alerts": {
+    "action": "omarchy-shell shell summon nerosong.battery-alerts"
+  }
+}
+"""
+    menu.write_text(ambiguous)
+    assert run(install, home, check=False).returncode != 0
+    assert run(uninstall, home, check=False).returncode != 0
+    assert menu.read_text() == ambiguous
+
+with tempfile.TemporaryDirectory() as temp:
+    home = Path(temp)
+    menu = home / ".config/omarchy/extensions/omarchy-menu.jsonc"
+    menu.parent.mkdir(parents=True)
+    menu.write_text('{"first": {"label": "First"}}\n')
+    run(install, home)
+    run(uninstall, home)
+    menu.write_text('{"second": {"label": "Second"}}\n')
+    run(install, home)
+    backup = menu.with_name(menu.name + ".battery-alerts.bak")
+    assert '"second"' in backup.read_text()
+    assert '"first"' not in backup.read_text()
+
+with tempfile.TemporaryDirectory() as temp:
+    home = Path(temp)
+    menu = home / ".config/omarchy/extensions/omarchy-menu.jsonc"
+    run(install, home)
+    backup = menu.with_name(menu.name + ".battery-alerts.bak")
+    backup.symlink_to("/etc/passwd")
+    before = menu.read_text()
+    assert run(uninstall, home, check=False).returncode != 0
+    assert menu.read_text() == before
 
 print("Menu script tests passed")

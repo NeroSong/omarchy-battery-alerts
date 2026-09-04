@@ -16,11 +16,15 @@ Item {
   property bool opened: false
   property int warningThreshold: 30
   property int criticalThreshold: 20
+  property string pendingSettings: ""
+  property bool closeAfterSave: false
 
   readonly property string pluginId: manifest && manifest.id
     ? String(manifest.id) : "nerosong.battery-alerts"
-  readonly property string settingsPath: Quickshell.env("HOME")
-    + "/.config/omarchy/battery-alerts.json"
+  readonly property string safeJsonPath: {
+    var url = Qt.resolvedUrl("bin/safe-json").toString()
+    return url.startsWith("file://") ? url.slice(7) : url
+  }
   readonly property string warningIconPath: {
     var url = Qt.resolvedUrl("warning-battery.svg").toString()
     return url.startsWith("file://") ? url.slice(7) : url
@@ -34,18 +38,39 @@ Item {
   readonly property color accent: Color.accent
   readonly property string fontFamily: Style.font.family
 
+  function safeJsonCommand(operation, value) {
+    var command = [
+      "/usr/bin/timeout", "--kill-after=1s", "5s",
+      safeJsonPath, operation, "settings"
+    ]
+    if (value !== undefined) command.push(value)
+    return command
+  }
+
   function open(payloadJson) {
     opened = true
-    settingsFile.reload()
+    reloadSettings()
     Qt.callLater(function() { keyCatcher.forceActiveFocus() })
   }
 
   function close() { opened = false }
 
-  function dismiss() {
-    if (saveTimer.running) saveSettings()
+  function finishDismiss() {
+    closeAfterSave = false
     if (shell && typeof shell.hide === "function") shell.hide(pluginId)
     else close()
+  }
+
+  function dismiss() {
+    if (saveTimer.running) {
+      saveTimer.stop()
+      saveSettings()
+    }
+    if (settingsWriteProcess.running || pendingSettings) {
+      closeAfterSave = true
+      return
+    }
+    finishDismiss()
   }
 
   function loadSettings(raw) {
@@ -56,6 +81,13 @@ Item {
     criticalThreshold = normalized.criticalThreshold
   }
 
+  function reloadSettings() {
+    if (!settingsReadProcess.running) {
+      settingsReadProcess.command = safeJsonCommand("read")
+      settingsReadProcess.running = true
+    }
+  }
+
   function saveSettings() {
     var normalized = BatteryModel.normalizeSettings({
       warningThreshold: warningThreshold,
@@ -63,7 +95,16 @@ Item {
     })
     warningThreshold = normalized.warningThreshold
     criticalThreshold = normalized.criticalThreshold
-    settingsFile.setText(JSON.stringify(normalized, null, 2) + "\n")
+    pendingSettings = JSON.stringify(normalized)
+    if (!settingsWriteProcess.running) writePendingSettings()
+  }
+
+  function writePendingSettings() {
+    if (!pendingSettings) return
+    var value = pendingSettings
+    pendingSettings = ""
+    settingsWriteProcess.command = safeJsonCommand("write", value)
+    settingsWriteProcess.running = true
   }
 
   function setWarning(value) {
@@ -98,26 +139,29 @@ Item {
       return
     }
     Quickshell.execDetached([
-      "omarchy-notification-send",
+      "/usr/bin/timeout", "--kill-after=1s", "5s", "/usr/bin/omarchy-notification-send",
       "-g", "󰂃", "-u", "normal", "-i", warningIconPath, "-t", "10000",
       "Battery is getting low", "Battery is down to " + warningThreshold + "%"
     ])
     Quickshell.execDetached([
-      "omarchy-notification-send",
+      "/usr/bin/timeout", "--kill-after=1s", "5s", "/usr/bin/omarchy-notification-send",
       "-g", "󱐋", "-u", "critical", "-i", criticalIconPath,
       "Time to recharge!", "Battery is down to " + criticalThreshold + "%"
     ])
   }
 
-  FileView {
-    id: settingsFile
-    path: root.settingsPath
-    watchChanges: true
-    atomicWrites: true
-    printErrors: false
-    onLoaded: root.loadSettings(text())
-    onLoadFailed: root.loadSettings("")
-    onFileChanged: reload()
+  Process {
+    id: settingsReadProcess
+    stdout: StdioCollector { id: settingsReadOutput; waitForEnd: true }
+    onExited: function(exitCode) { root.loadSettings(exitCode === 0 ? settingsReadOutput.text : "") }
+  }
+  Process {
+    id: settingsWriteProcess
+    onExited: function(exitCode) {
+      if (exitCode !== 0) console.warn("battery-alerts: settings write failed:", exitCode)
+      if (root.pendingSettings) root.writePendingSettings()
+      else if (root.closeAfterSave) root.finishDismiss()
+    }
   }
 
   Timer {

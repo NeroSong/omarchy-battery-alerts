@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "nerosong.battery-alerts",
   "name": "Battery Alerts",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "author": "NeroSong",
   "description": "Two-stage, configurable battery warnings for Omarchy",
   "kinds": [
