@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 import "BatteryModel.js" as BatteryModel
 
@@ -33,9 +34,9 @@ Item {
     var url = Qt.resolvedUrl("critical-battery.svg").toString()
     return url.startsWith("file://") ? url.slice(7) : url
   }
-  readonly property color foreground: Color.foreground
-  readonly property color background: Color.background
-  readonly property color accent: Color.accent
+  readonly property color foreground: Commons.Color.foreground
+  readonly property color background: Commons.Color.background
+  readonly property color accent: Commons.Color.accent
   readonly property string fontFamily: Style.font.family
 
   function safeJsonCommand(operation, value) {
